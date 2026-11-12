@@ -1,0 +1,20 @@
+{
+  "itemGroup.katanacraft": "KatanaCraft",
+  "item.katanacraft.shiden": "Shiden",
+  "item.katanacraft.shiden.art": "Art \"Purple Lightning Flash\": backstep and unleash a long-range slash wave",
+  "entity.katanacraft.slash_wave": "Slash Wave",
+  "effect.katanacraft.guard_break": "Guard Broken",
+  "effect.katanacraft.vulnerable": "Vulnerable",
+  "key.categories.katanacraft": "KatanaCraft",
+  "key.katanacraft.guard": "Guard / Parry",
+  "input.katanacraft.light_tap": "L",
+  "input.katanacraft.heavy_tap": "R",
+  "input.katanacraft.light_hold": "Hold L",
+  "input.katanacraft.heavy_hold": "Hold R",
+  "tooltip.katanacraft.controls.light": "Left click: 3-hit combo / Hold: drawing flurry",
+  "tooltip.katanacraft.controls.heavy": "Right click: wide slash / Hold: dash storm",
+  "tooltip.katanacraft.controls.guard": "Guard key: guard (press just before a hit to parry)",
+  "tooltip.katanacraft.controls.sneak": "While sneaking: vanilla mining / using",
+  "tooltip.katanacraft.empower": "Attacks consume posture / Parry 3 times to empower your next Art",
+  "item.katanacraft.shiden.art.empowered": "Empowered: a giant, stronger slash wave"
+}

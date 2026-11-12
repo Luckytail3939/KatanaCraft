@@ -1,0 +1,20 @@
+{
+  "itemGroup.katanacraft": "KatanaCraft",
+  "item.katanacraft.shiden": "紫電",
+  "item.katanacraft.shiden.art": "固有技「紫電一閃」: 後方へ跳び、長射程の光波斬撃を放つ",
+  "entity.katanacraft.slash_wave": "光波斬撃",
+  "effect.katanacraft.guard_break": "体勢崩し",
+  "effect.katanacraft.vulnerable": "無防備",
+  "key.categories.katanacraft": "KatanaCraft",
+  "key.katanacraft.guard": "ガード / 弾き",
+  "input.katanacraft.light_tap": "左",
+  "input.katanacraft.heavy_tap": "右",
+  "input.katanacraft.light_hold": "左長押し",
+  "input.katanacraft.heavy_hold": "右長押し",
+  "tooltip.katanacraft.controls.light": "左クリック: 三段斬り / 長押し: 抜刀連撃",
+  "tooltip.katanacraft.controls.heavy": "右クリック: 横薙ぎ / 長押し: 踏み込み乱舞",
+  "tooltip.katanacraft.controls.guard": "ガードキー: ガード（押した瞬間に受けると弾き）",
+  "tooltip.katanacraft.controls.sneak": "スニーク中はブロック破壊・設置などの通常操作",
+  "tooltip.katanacraft.empower": "攻撃で体幹を消費 / 3回弾くと刀が強化され、次の固有技が強力になる",
+  "item.katanacraft.shiden.art.empowered": "強化時: 光波が巨大化し、威力が上がる"
+}
