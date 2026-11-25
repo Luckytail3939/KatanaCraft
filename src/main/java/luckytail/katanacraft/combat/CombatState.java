@@ -24,6 +24,7 @@ public class CombatState {
     public InputType buffered;
     public int lightStep;            // 次に出る通常斬撃の段 (0..2)
     public int comboWindow;          // 次段へ繋げられる残りtick
+    public int sheatheTimer;         // >0: この tick 数後に納刀（抜いたまま終わるモーション・ガードの後）
 
     // ルーン / 固有技
     public final List<InputType> runes = new ArrayList<>();
@@ -36,6 +37,8 @@ public class CombatState {
     public int lastParryTick = -9999;
     public int empoweredTicks;       // >0 なら強化状態（残りtick）
     public boolean artEmpowered;     // 実行中の固有技が強化版か
+
+    public boolean forcedCrouch;     // 突進連撃のタメ中、低い姿勢を強制している
 
     public boolean dirty = true;
 

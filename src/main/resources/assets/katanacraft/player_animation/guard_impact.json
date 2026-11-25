@@ -1,0 +1,162 @@
+{
+ "version": 1,
+ "name": "guard_impact",
+ "author": "katanacraft",
+ "description": "押し込まれる",
+ "emote": {
+  "isLoop": "false",
+  "returnTick": 0,
+  "beginTick": 0,
+  "endTick": 5,
+  "stopTick": 7,
+  "degrees": true,
+  "easeBeforeKeyframe": true,
+  "nsfw": false,
+  "moves": [
+   {
+    "tick": 0,
+    "easing": "LINEAR",
+    "turn": 0,
+    "rightArm": {
+     "pitch": -63.516
+    }
+   },
+   {
+    "tick": 0,
+    "easing": "LINEAR",
+    "turn": 0,
+    "rightArm": {
+     "yaw": 0.0
+    }
+   },
+   {
+    "tick": 0,
+    "easing": "LINEAR",
+    "turn": 0,
+    "rightArm": {
+     "roll": -76.458
+    }
+   },
+   {
+    "tick": 0,
+    "easing": "LINEAR",
+    "turn": 0,
+    "rightItem": {
+     "pitch": -148.115
+    }
+   },
+   {
+    "tick": 0,
+    "easing": "LINEAR",
+    "turn": 0,
+    "rightItem": {
+     "yaw": 0.0
+    }
+   },
+   {
+    "tick": 0,
+    "easing": "LINEAR",
+    "turn": 0,
+    "rightItem": {
+     "roll": -87.687
+    }
+   },
+   {
+    "tick": 1,
+    "easing": "OUTQUAD",
+    "turn": 0,
+    "rightArm": {
+     "pitch": -49.503
+    }
+   },
+   {
+    "tick": 1,
+    "easing": "OUTQUAD",
+    "turn": 0,
+    "rightArm": {
+     "yaw": 0.0
+    }
+   },
+   {
+    "tick": 1,
+    "easing": "OUTQUAD",
+    "turn": 0,
+    "rightArm": {
+     "roll": -73.853
+    }
+   },
+   {
+    "tick": 1,
+    "easing": "OUTQUAD",
+    "turn": 0,
+    "rightItem": {
+     "pitch": -155.82
+    }
+   },
+   {
+    "tick": 1,
+    "easing": "OUTQUAD",
+    "turn": 0,
+    "rightItem": {
+     "yaw": 0.0
+    }
+   },
+   {
+    "tick": 1,
+    "easing": "OUTQUAD",
+    "turn": 0,
+    "rightItem": {
+     "roll": -94.338
+    }
+   },
+   {
+    "tick": 5,
+    "easing": "INOUTSINE",
+    "turn": 0,
+    "rightArm": {
+     "pitch": -63.516
+    }
+   },
+   {
+    "tick": 5,
+    "easing": "INOUTSINE",
+    "turn": 0,
+    "rightArm": {
+     "yaw": 0.0
+    }
+   },
+   {
+    "tick": 5,
+    "easing": "INOUTSINE",
+    "turn": 0,
+    "rightArm": {
+     "roll": -76.458
+    }
+   },
+   {
+    "tick": 5,
+    "easing": "INOUTSINE",
+    "turn": 0,
+    "rightItem": {
+     "pitch": -148.115
+    }
+   },
+   {
+    "tick": 5,
+    "easing": "INOUTSINE",
+    "turn": 0,
+    "rightItem": {
+     "yaw": 0.0
+    }
+   },
+   {
+    "tick": 5,
+    "easing": "INOUTSINE",
+    "turn": 0,
+    "rightItem": {
+     "roll": -87.687
+    }
+   }
+  ]
+ }
+}

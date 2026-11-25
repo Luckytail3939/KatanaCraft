@@ -15,6 +15,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -44,6 +45,10 @@ public final class CombatManager {
     private static final int BUFFER_TICKS = 6;
     /** 1・2段目の後、次段へ繋げられる猶予 */
     private static final int COMBO_WINDOW = 12;
+    /** 抜いたまま終わるモーションの後、納刀するまで (ticks)。次段の受付より少し長く */
+    private static final int SHEATHE_DELAY = COMBO_WINDOW + 2;
+    /** ガードを離してから納刀するまで (ticks) */
+    private static final int SHEATHE_AFTER_GUARD = 8;
     private static final DustParticleOptions EMPOWER_DUST = new DustParticleOptions(new Vector3f(0.75F, 0.5F, 1.0F), 0.9F);
 
     public static CombatState get(ServerPlayer p) {
@@ -94,6 +99,8 @@ public final class CombatManager {
             }
         }
         if (!down) s.guardLocked = false;
+        if (down) s.sheatheTimer = 0;
+        else if (s.guardHeld && s.action == null) s.sheatheTimer = SHEATHE_AFTER_GUARD;
         s.guardHeld = down;
         s.dirty = true;
     }
@@ -192,6 +199,7 @@ public final class CombatManager {
     private static void startAction(ServerPlayer p, CombatState s, KatanaAction action, int duration) {
         s.action = action;
         s.actionTick = 0;
+        s.sheatheTimer = 0;
         s.actionDuration = Math.max(1, duration);
         s.buffered = null;
         s.dirty = true;
@@ -240,7 +248,20 @@ public final class CombatManager {
             s.lightStep = 0;
         }
 
+        // 突進連撃のタメ〜突進中は低い姿勢（視点も下がる）
+        boolean crouch = holding && s.action == KatanaAction.DASH_STORM && s.actionTick < KatanaMoves.DASH_CROUCH_TICKS;
+        if (crouch != s.forcedCrouch) {
+            p.setForcedPose(crouch ? Pose.CROUCHING : null);
+            s.forcedCrouch = crouch;
+        }
+
         if (s.parryTicks > 0) s.parryTicks--;
+
+        // 納刀
+        if (s.sheatheTimer > 0 && --s.sheatheTimer == 0 && s.action == null && !s.guardHeld && holding) {
+            broadcastAction(p, KatanaAction.SHEATHE);
+            AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 1.8F);
+        }
 
         // 弾き回数の時間切れ / 強化状態の残り時間
         if (s.parryStacks > 0 && p.tickCount - s.lastParryTick > Config.PARRY_STACK_RESET_TICKS.get()) {
@@ -286,6 +307,10 @@ public final class CombatManager {
             case LIGHT_1 -> { s.lightStep = 1; s.comboWindow = COMBO_WINDOW; }
             case LIGHT_2 -> { s.lightStep = 2; s.comboWindow = COMBO_WINDOW; }
             default -> { s.lightStep = 0; s.comboWindow = 0; }
+        }
+        // 刀を抜いたまま終わるモーションは、次の入力がなければ少し後に納刀する
+        if (a == KatanaAction.LIGHT_1 || a == KatanaAction.LIGHT_2 || a == KatanaAction.HEAVY) {
+            s.sheatheTimer = SHEATHE_DELAY;
         }
         s.dirty = true;
         if (s.buffered != null) {

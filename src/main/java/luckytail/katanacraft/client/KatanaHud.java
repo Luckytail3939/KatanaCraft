@@ -24,70 +24,138 @@ public final class KatanaHud {
     // ------------------------------------------------------------------
     // 体幹ゲージ: 中央から左右に伸びるバー。削られると中央へ縮む
     // ------------------------------------------------------------------
+    // posture.png (256x32) のレイアウト
+    private static final ResourceLocation POSTURE_TEX = ResourceLocation.fromNamespaceAndPath(Katanacraft.MODID, "textures/gui/posture.png");
+    private static final int TEX_W = 256, TEX_H = 32;
+    private static final int FRAME_U = 0, FRAME_V = 0, FRAME_W = 186, FRAME_H = 9;     // ゲージの枠（内側182x5は透明）
+    private static final int FILL_U = 0, FILL_V = 10, FILL_W = 182, FILL_H = 5;        // ゲージの中身（着色）
+    private static final int EMBLEM_U = 0, EMBLEM_V = 16, EMBLEM_W = 9, EMBLEM_H = 13; // 紋の枠
+    private static final int CORE_U = 10, CORE_V = 16, CORE_W = 7, CORE_H = 11;        // 紋の中身（着色）
+    private static final int PIP_EMPTY_U = 18, PIP_LIT_U = 24, PIP_V = 16, PIP_SIZE = 5; // 弾き回数の目盛り
+
+    // ゲージの色
+    private static final int COLOR_HIGH = 0xF2D45C;      // 黄
+    private static final int COLOR_MID = 0xF0A040;       // オレンジ
+    private static final int COLOR_LOW = 0xE0402B;       // 赤
+    private static final int COLOR_LOW_DARK = 0xA02414;  // 赤（点滅の暗い側）
+    private static final int COLOR_EMPOWERED = 0xD9BFFF; // 紫（強化中）
+    private static final int COLOR_PURPLE = 0x9B4DFF;     // 紫（ガード中の紋・弾き目盛り）
+    private static final int COLOR_EMBLEM_IDLE = 0x5A5068; // 通常時の紋
+
     public static final IGuiOverlay POSTURE = (gui, g, partialTick, width, height) -> {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.options.hideGui || !KatanaItem.isHoldingKatana(p) || !gui.shouldDrawSurvivalElements()) return;
 
         int cx = width / 2;
-        int y = height - 29;
-        int half = 91;
+        int barX = cx - FILL_W / 2;  // ゲージ中身の左端（経験値バーと同じ位置）
+        int barY = height - 29;
+        int y = barY;                 // モヤ描画用の基準
+        int half = FILL_W / 2;
         long now = ClientKatanaState.clientTicks;
         float t = now + partialTick;
 
         float ratio = Mth.clamp(ClientKatanaState.displayPosture / ClientKatanaState.maxPosture, 0F, 1F);
         boolean broken = p.hasEffect(ModEffects.GUARD_BREAK.get());
         boolean empowered = ClientKatanaState.isEmpowered();
-
-        // 強化状態: ゲージの周りにモヤ（バーの下に描く）
-        if (empowered) drawEmpowerMist(g, cx, y, half, t, true);
-
-        // 枠と下地
         boolean exhausted = now - ClientKatanaState.exhaustedTime < 8;
-        int frame = exhausted ? ((now / 2) % 2 == 0 ? 0xFFE0402B : 0xB0000000) : 0xB0000000;
-        g.fill(cx - half - 1, y - 1, cx + half + 1, y + 6, frame);
-        g.fill(cx - half, y, cx + half, y + 5, 0x60402040);
 
-        int color;
-        if (broken) color = (now / 2) % 2 == 0 ? 0xFFFF3B30 : 0xFFFFFFFF;
-        else if (now - ClientKatanaState.postureHitTime < 3) color = 0xFFFFFFFF;
-        else if (empowered) color = 0xFFE6D2FF;
-        else if (ratio > 0.5F) color = 0xFFEADFB4;
-        else if (ratio > 0.25F) color = 0xFFF0A040;
-        else color = ((now / 4) % 2 == 0) ? 0xFFE0402B : 0xFFB02818; // 残り少ないと点滅
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
 
+        // 強化状態: ゲージの周りにモヤ（ゲージの下に描く）
+        if (empowered) {
+            drawEmpowerMist(g, cx, y, half, t, true);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+        }
+
+        // 下地（枠の内側）
+        g.fill(barX + 1, barY, barX + FILL_W - 1, barY + FILL_H, 0x70201028);
+
+        // ゲージの中身: 中央から左右に伸び、削られると中央へ縮む
         int fillHalf = Math.round(half * ratio);
         if (fillHalf > 0) {
-            g.fill(cx - fillHalf, y, cx + fillHalf, y + 5, color);
-            g.fill(cx - fillHalf, y, cx + fillHalf, y + 1, 0x60FFFFFF); // ハイライト
+            setColor(g, fillColor(ratio, broken, empowered, now), 1F);
+            g.blit(POSTURE_TEX, cx - fillHalf, barY, FILL_U + half - fillHalf, FILL_V, fillHalf * 2, FILL_H, TEX_W, TEX_H);
         }
 
-        // 強化状態: バーの上を漂う光の粒（バーの上に描く）
-        if (empowered) drawEmpowerMist(g, cx, y, half, t, false);
-
-        // 固有技クールダウン（バーの上の細い線）
+        // 固有技クールダウン（ゲージ下端の細い線）
         if (ClientKatanaState.artCooldown > 0) {
             int cd = Math.round(half * ClientKatanaState.artCooldown / (float) ClientKatanaState.artCooldownMax);
-            g.fill(cx - cd, y - 3, cx + cd, y - 2, 0xCC9B6BFF);
+            g.setColor(1F, 1F, 1F, 1F);
+            g.fill(cx - cd, barY + FILL_H - 1, cx + cd, barY + FILL_H, 0xCC9B6BFF);
         }
 
-        // 中央の紋（ガード中は紫に光る）
-        int emblem = empowered ? ((now / 3) % 2 == 0 ? 0xFFFFFFFF : 0xFFC9A2FF)
-                : ClientKatanaState.guarding ? 0xFFC9A2FF : 0xFF5A4A6A;
-        g.fill(cx - 3, y - 2, cx + 3, y + 7, 0xFF000000);
-        g.fill(cx - 2, y - 1, cx + 2, y + 6, emblem);
+        // 枠（体幹不足で攻撃できなかった時は赤く点滅）
+        if (exhausted && (now / 2) % 2 == 0) setColor(g, 0xFF6050, 1F);
+        else g.setColor(1F, 1F, 1F, 1F);
+        g.blit(POSTURE_TEX, barX - 2, barY - 2, FRAME_U, FRAME_V, FRAME_W, FRAME_H, TEX_W, TEX_H);
 
-        // 弾き回数の目盛り（中央の紋の上）。強化中は表示しない
+        // 強化状態: ゲージの上を漂う光の粒
+        if (empowered) {
+            drawEmpowerMist(g, cx, y, half, t, false);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+        }
+
+        // 中央の紋: 中身を着色 → 枠を重ねる
+        int ex = cx - EMBLEM_W / 2;
+        int ey = barY + FILL_H / 2 - EMBLEM_H / 2;
+        setColor(g, emblemColor(broken, empowered, now), 1F);
+        g.blit(POSTURE_TEX, ex + 1, ey + 1, CORE_U, CORE_V, CORE_W, CORE_H, TEX_W, TEX_H);
+        g.setColor(1F, 1F, 1F, 1F);
+        g.blit(POSTURE_TEX, ex, ey, EMBLEM_U, EMBLEM_V, EMBLEM_W, EMBLEM_H, TEX_W, TEX_H);
+
+        // 弾き回数の目盛り（紋の上）。強化中は表示しない
         if (!empowered && ClientKatanaState.parryStacks > 0) {
             int n = ClientKatanaState.parriesToEmpower;
-            int pipX = cx - (n * 5 - 2) / 2;
+            int step = PIP_SIZE + 1;
+            int px0 = cx - (n * step - 1) / 2;
+            int py = ey - PIP_SIZE - 1;
             for (int i = 0; i < n; i++) {
-                int x = pipX + i * 5;
-                g.fill(x - 1, y - 9, x + 4, y - 4, 0xC0000000);
-                g.fill(x, y - 8, x + 3, y - 5, i < ClientKatanaState.parryStacks ? 0xFFC9A2FF : 0xFF3A2E48);
+                boolean lit = i < ClientKatanaState.parryStacks;
+                if (lit) setColor(g, COLOR_PURPLE, 1F);
+                else g.setColor(1F, 1F, 1F, 1F);
+                g.blit(POSTURE_TEX, px0 + i * step, py, lit ? PIP_LIT_U : PIP_EMPTY_U, PIP_V, PIP_SIZE, PIP_SIZE, TEX_W, TEX_H);
             }
         }
+
+        g.setColor(1F, 1F, 1F, 1F);
+        RenderSystem.disableBlend();
     };
+
+    /** ゲージ中身の色: 黄 → オレンジ → 赤（残り少ないと点滅）。強化中は紫 */
+    private static int fillColor(float ratio, boolean broken, boolean empowered, long now) {
+        if (broken) return (now / 2) % 2 == 0 ? 0xFF3B30 : 0xFFFFFF;
+        if (now - ClientKatanaState.postureHitTime < 3) return 0xFFFFFF;
+        if (empowered) return COLOR_EMPOWERED;
+        if (ratio > 0.6F) return COLOR_HIGH;
+        if (ratio > 0.3F) return lerpColor(COLOR_MID, COLOR_HIGH, (ratio - 0.3F) / 0.3F);
+        int low = lerpColor(COLOR_LOW, COLOR_MID, ratio / 0.3F);
+        if (ratio < 0.2F && (now / 4) % 2 == 0) return COLOR_LOW_DARK;
+        return low;
+    }
+
+    /** 紋の色: 通常はくすんだ紫、ガード中は紫、強化中は白と紫で明滅、崩れたら赤 */
+    private static int emblemColor(boolean broken, boolean empowered, long now) {
+        if (broken) return 0xFF3B30;
+        if (empowered) return (now / 3) % 2 == 0 ? 0xFFFFFF : COLOR_PURPLE;
+        if (ClientKatanaState.guarding) return COLOR_PURPLE;
+        return COLOR_EMBLEM_IDLE;
+    }
+
+    private static int lerpColor(int a, int b, float f) {
+        f = Mth.clamp(f, 0F, 1F);
+        int r = (int) Mth.lerp(f, (a >> 16) & 0xFF, (b >> 16) & 0xFF);
+        int gg = (int) Mth.lerp(f, (a >> 8) & 0xFF, (b >> 8) & 0xFF);
+        int bb = (int) Mth.lerp(f, a & 0xFF, b & 0xFF);
+        return (r << 16) | (gg << 8) | bb;
+    }
+
+    private static void setColor(GuiGraphics g, int rgb, float alpha) {
+        g.setColor(((rgb >> 16) & 0xFF) / 255F, ((rgb >> 8) & 0xFF) / 255F, (rgb & 0xFF) / 255F, alpha);
+    }
 
     /**
      * 強化状態のモヤ。

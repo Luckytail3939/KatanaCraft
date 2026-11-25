@@ -6,13 +6,19 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 全刀共通の通常モーション。各モーションの tick ごとに何が起きるかを書く。
- * （タイミングは KatanaAction の duration と合わせること）
+ * 全刀共通の通常モーション（サーバー側）。各モーションの tick ごとに何が起きるかを書く。
+ *
+ * ここの「当たりの tick」は、player_animation の振り抜く瞬間と、
+ * クライアントの斬撃エフェクト（ClientSlashFx）の出る瞬間に合わせてある。
+ * 変更するときは3か所をそろえること。
  *
  * 数値の目安: range=届く距離, arc=扇の角度, mult=攻撃力倍率, kb=ノックバック
  */
 public final class KatanaMoves {
     private KatanaMoves() {}
+
+    /** 突進連撃で低く構えている（視点が下がる）時間 */
+    public static final int DASH_CROUCH_TICKS = 14;
 
     public static void tick(ServerPlayer p, KatanaAction action, int t) {
         switch (action) {
@@ -27,89 +33,84 @@ public final class KatanaMoves {
         }
     }
 
-    /** 1段目: 鞘から片手で抜刀 → 右上から左下へ袈裟斬り */
+    /** 1段目: 居合で抜刀 → 片手で右上から左下へ袈裟斬り（当たり 6） */
     private static void light1(ServerPlayer p, int t) {
-        if (t == 0) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.6F, 2.0F); // 鯉口を切る音
-        if (t == 3) {
-            AttackHelper.slash(p, 3.6, 120, 1.0F, 0.25F);
-            AttackHelper.sweepFx(p, 1.4, 1);
+        if (t == 0) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.6F, 2.0F); // 鯉口を切る
+        if (t == 2) AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_NODAMAGE, 0.5F, 1.6F);
+        if (t == 6) {
+            AttackHelper.slash(p, 3.6, 130, 1.0F, 0.25F);
             AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 1.3F);
         }
     }
 
-    /** 2段目: 左下から右上へ斬り上げ */
+    /** 2段目: 片手で左下から右上へ斬り上げ（当たり 3） */
     private static void light2(ServerPlayer p, int t) {
         if (t == 3) {
-            AttackHelper.slash(p, 3.6, 120, 1.0F, 0.25F);
-            AttackHelper.sweepFx(p, 1.4, 1);
+            AttackHelper.slash(p, 3.6, 130, 1.0F, 0.25F);
             AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 1.5F);
         }
     }
 
-    /** 3段目: 両手で掴み上段から振り下ろし → 納刀 */
+    /** 3段目: 両手に持ち替えて真っ向から唐竹割り（当たり 7）→ 納刀（15） */
     private static void light3(ServerPlayer p, int t) {
-        if (t == 5) {
+        if (t == 7) {
             AttackHelper.slash(p, 3.8, 90, 1.6F, 0.5F);
-            AttackHelper.sweepFx(p, 1.5, 2);
             AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 1.1F);
         }
-        if (t == 13) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 1.8F); // 納刀
+        if (t == 15) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 1.8F); // 納刀
     }
 
-    /** 左長押し: 抜刀からの連撃 → 締めの一太刀 → 納刀 */
+    /** 左長押し: 縦に抜刀し、燕返しのように三方向から同時に斬る（当たり 5,6,7）→ 納刀（15） */
     private static void flurry(ServerPlayer p, int t) {
         if (t == 0) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.6F, 2.0F);
-        if (t >= 4 && t <= 20 && t % 4 == 0) {
-            AttackHelper.lunge(p, 0.18, p.getDeltaMovement().y);
-            AttackHelper.slash(p, 3.5, 100, 0.5F, 0.05F);
-            AttackHelper.sweepFx(p, 1.3, 1);
-            AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.7F, 1.4F + (t / 4) * 0.08F);
+        if (t >= 5 && t <= 7) {
+            AttackHelper.slash(p, 3.8, 140, 0.85F, t == 7 ? 0.5F : 0.05F);
+            AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.8F, 1.3F + (t - 5) * 0.15F);
         }
-        if (t == 25) {
-            AttackHelper.slash(p, 3.8, 120, 1.2F, 0.6F);
-            AttackHelper.sweepFx(p, 1.5, 3);
-            AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 1.0F);
-        }
-        if (t == 31) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 1.8F);
+        if (t == 15) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 1.8F);
     }
 
-    /** 右クリック: 刀を引いてタメ → 横一文字の斬り払い（広い扇・強ノックバック） */
+    /** 右クリック: 左腰の柄に手を添えて溜め → 片手で横一文字の抜き打ち（当たり 14） */
     private static void heavy(ServerPlayer p, int t) {
-        if (t == 0) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 0.6F); // 柄を握り直す
-        if (t < 14 && t % 3 == 1) {
-            // タメ: 刀身の周りに光が集まる
-            Vec3 look = AttackHelper.flatLook(p);
-            Vec3 side = new Vec3(-look.z, 0, look.x); // 右手側
-            p.serverLevel().sendParticles(ParticleTypes.ENCHANTED_HIT,
-                    p.getX() + side.x * 0.6 - look.x * 0.3, p.getY(0.6), p.getZ() + side.z * 0.6 - look.z * 0.3,
-                    4, 0.25, 0.25, 0.25, 0.05);
-        }
-        if (t == 10) AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_NODAMAGE, 0.8F, 0.6F);
+        if (t == 0) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 0.6F); // 柄を握る
+        if (t > 3 && t < 13 && t % 3 == 1) chargeFx(p);
+        if (t == 12) AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_NODAMAGE, 0.8F, 0.6F);
         if (t == 14) {
             AttackHelper.slash(p, 5.0, 250, 2.0F, 1.0F);
-            AttackHelper.sweepFx(p, 2.0, 5);
             AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.75F);
             AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_KNOCKBACK, 0.9F, 0.8F);
         }
     }
 
-    /** 右長押し: 前方へ踏み込み → 周囲を連続で斬り刻む */
+    /**
+     * 右長押し: 低く構えて溜め（視点が下がる）→ 高速で突進 →
+     * 燕返しの三連撃（12,13,14）+ 横一閃（17）+ 返しの横一閃（20）→ 納刀（29）
+     */
     private static void dashStorm(ServerPlayer p, int t) {
-        if (t == 0) {
-            AttackHelper.lunge(p, 1.7, 0.1);
-            AttackHelper.particles(p, ParticleTypes.CLOUD, 8, 0.3, 0.05);
+        if (t == 0) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 0.6F);
+        if (t > 2 && t < 10 && t % 3 == 0) chargeFx(p);
+        if (t == 10) {
+            AttackHelper.lunge(p, 2.1, 0.05);
+            AttackHelper.particles(p, ParticleTypes.CLOUD, 10, 0.3, 0.05);
             AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_NODAMAGE, 1.0F, 0.5F);
         }
-        if (t >= 8 && t <= 20 && t % 4 == 0) {
-            AttackHelper.slash(p, 4.5, 360, 0.6F, 0.1F);
-            AttackHelper.ringFx(p, 2.2, 5);
-            AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.8F, 1.0F + (t / 4) * 0.1F);
+        if (t >= 12 && t <= 14) {
+            AttackHelper.slash(p, 4.0, 160, 0.6F, 0.05F);
+            AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.8F, 1.2F + (t - 12) * 0.15F);
         }
-        if (t == 25) {
-            AttackHelper.slash(p, 4.8, 360, 1.4F, 1.0F);
-            AttackHelper.ringFx(p, 3.0, 8);
-            AttackHelper.sound(p, SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.7F);
+        if (t == 17 || t == 20) {
+            AttackHelper.slash(p, 4.6, 240, t == 20 ? 1.2F : 0.8F, t == 20 ? 1.0F : 0.2F);
+            AttackHelper.sound(p, t == 20 ? SoundEvents.PLAYER_ATTACK_STRONG : SoundEvents.PLAYER_ATTACK_SWEEP, 1.0F, 0.8F);
         }
-        if (t == 31) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 1.8F);
+        if (t == 29) AttackHelper.sound(p, SoundEvents.ARMOR_EQUIP_IRON, 0.8F, 1.8F);
+    }
+
+    /** タメ: 左腰の柄の周りに光が集まる */
+    private static void chargeFx(ServerPlayer p) {
+        Vec3 look = AttackHelper.flatLook(p);
+        Vec3 left = new Vec3(look.z, 0, -look.x);
+        p.serverLevel().sendParticles(ParticleTypes.ENCHANTED_HIT,
+                p.getX() + left.x * 0.35 + look.x * 0.3, p.getY(0.5), p.getZ() + left.z * 0.35 + look.z * 0.3,
+                4, 0.2, 0.2, 0.2, 0.05);
     }
 }

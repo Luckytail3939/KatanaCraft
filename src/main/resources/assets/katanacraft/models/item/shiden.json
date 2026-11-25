@@ -1,6 +1,29 @@
 {
-  "parent": "minecraft:item/handheld",
-  "textures": {
-    "layer0": "katanacraft:item/shiden"
-  }
+  "loader": "forge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "katanacraft:item/katana_hidden"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "katanacraft:item/shiden_sheathed_3d"
+    },
+    "fixed": {
+      "parent": "katanacraft:item/shiden_sheathed_3d"
+    },
+    "ground": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "katanacraft:item/shiden"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "katanacraft:drawn": 1
+      },
+      "model": "katanacraft:item/shiden_drawn"
+    }
+  ]
 }

@@ -61,3 +61,10 @@ mandatory = true
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
+# Player Animation Library（遊ぶ人も playerAnimator を入れる必要がある）
+[[dependencies."${mod_id}"]]
+modId = "playeranimator"
+mandatory = true
+versionRange = "*"
+ordering = "NONE"
+side = "BOTH"

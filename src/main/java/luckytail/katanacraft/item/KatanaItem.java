@@ -4,6 +4,7 @@ import luckytail.katanacraft.combat.InputType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -11,7 +12,8 @@ import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
+import net.minecraftforge.registries.ForgeRegistries;
+import javax.annotation.Nullable;
 
 import java.util.List;
 
@@ -35,11 +37,30 @@ public abstract class KatanaItem extends SwordItem {
         return 22;
     }
 
+    /** 固有技で、抜刀する（腰→手）tick。アニメーションで柄を握って引き抜く瞬間に合わせる */
+    public int getArtDrawTick() {
+        return 5;
+    }
+
+    /** 固有技で、刀身が鞘に収まる（手→腰）tick */
+    public int getArtSheatheTick() {
+        return getArtDuration() - 4;
+    }
+
     /**
      * 固有技の処理。tick は 0 から getArtDuration()-1 まで毎tick呼ばれる。
      * @param empowered 弾きで強化された状態で発動したか（刀ごとに強化内容を決める）
      */
     public abstract void artTick(ServerPlayer player, int tick, boolean empowered);
+
+    /**
+     * 腰に差したとき描くモデル: assets/<namespace>/models/item/<刀のID>_sheathed_3d.json
+     * （例: katanacraft:item/shiden_sheathed_3d）。新しい刀もこの名前でモデルを置けば帯刀される。
+     */
+    public ResourceLocation getHipModelLocation() {
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(this);
+        return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "item/" + id.getPath() + "_sheathed_3d");
+    }
 
     public static boolean isKatana(ItemStack stack) {
         return stack.getItem() instanceof KatanaItem;

@@ -1,0 +1,21 @@
+{
+  "loader": "forge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "katanacraft:item/shiden_drawn_3d"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "katanacraft:item/shiden_sheathed_3d"
+    },
+    "fixed": {
+      "parent": "katanacraft:item/shiden_sheathed_3d"
+    },
+    "ground": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "katanacraft:item/shiden"
+      }
+    }
+  }
+}

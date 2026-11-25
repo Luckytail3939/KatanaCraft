@@ -24,7 +24,12 @@ public final class ClientPacketHandler {
             if (player == mc.player && action == KatanaAction.EXHAUSTED) {
                 ClientKatanaState.exhaustedTime = ClientKatanaState.clientTicks;
             }
-            KatanaAnimationHooks.onAction(player, action);
+            KatanaAnimationHooks.onAction(player, action); // 先に再生（抜刀中かどうかを見るため）
+            ClientDrawState.onAction(player, action);
+            ClientSlashFx.onAction(player, action);
+            if (player == mc.player && action == KatanaAction.DASH_STORM) {
+                ClientPoseControl.startDashCrouch();
+            }
         }
     }
 }
